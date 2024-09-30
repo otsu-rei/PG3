@@ -37,8 +37,8 @@ int32_t CalculateSalary(uint32_t workTime) {
 ////////////////////////////////////////////////////////////////////////////////////////////
 int main() {
 
-	// 働いた時間
-	uint32_t workTime = 1;
+	
+	uint32_t workTime = 1; //!< 働いた時間
 
 	while (true) {
 
