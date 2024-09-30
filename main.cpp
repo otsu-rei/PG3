@@ -4,16 +4,36 @@
 //* c++
 #include <cstdint>
 #include <cstdio>
+#include <format>
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// methods
+////////////////////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+T Min(T v1, T v2) {
+	if (v1 < v2) { //!< v1の方が小さい場合
+		return v1;
+	}
+
+	return v2;
+}
+
+template <>
+char Min<char>(char v1, char v2) {
+	printf("数字以外は代入できません\n");
+	return 0;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // main
 ////////////////////////////////////////////////////////////////////////////////////////////
 int main() {
 
-	// ハローワールド
-	// HELLO WORLD
-
-	printf("ハローワールド");
+	printf(std::format("Min<int>(4, 8)         = {}\n", Min<int>(4, 8)).c_str());
+	printf(std::format("Min<float>(4.0f, 8.0f) = {}\n", Min<float>(4.0f, 8.0f)).c_str());
+	printf(std::format("Min<double>(4.0, 8.0)  = {}\n", Min<double>(4.0, 8.0)).c_str());
+	printf(std::format("Min<char>('4', '8')    = {}\n", Min<char>('4', '8')).c_str());
 
 	return 0;
 }
