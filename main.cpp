@@ -13,5 +13,7 @@ int main() {
 	// ハローワールド
 	// HELLO WORLD
 
+	printf("ハローワールド");
+
 	return 0;
 }
