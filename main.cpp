@@ -9,12 +9,13 @@
 #include <string>
 #include <thread>
 #include <chrono>
+#include <functional>
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // typedef
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef void (*OutputFunction)(const std::string&);
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // methods
@@ -30,37 +31,9 @@ int32_t RollDice() {
 	return dist(seed);
 }
 
-//! @brief dice値が半か丁か判別する
-//! @param[in] dice       ダイスの値
-//! @param[in] userAnswer 半か丁か(半の場合は1, 丁の場合は0)
-//! @return 正解または不正解のstring
-std::string CheckAnswer(int32_t dice, int32_t userAnswer) {
-
-	// userの答えが合っている場合
-	if (userAnswer == dice % 2) {
-		return "正解\n";
-	}
-
-	return "不正解\n";
-}
-
-//! @brief consoleにstrを出力
-void OutputConsole(const std::string& str) {
-	printf(str.c_str());
-}
-
-void Wait(OutputFunction func, int32_t waitSecond) {
-
-	int32_t waitTime = waitSecond;
-
-	// waitTimeが0秒になるまで続ける
-	while (waitTime > 0) {
-
-		func(".");
-
-		std::this_thread::sleep_for(std::chrono::seconds(1));
-		waitTime--; //!< 1秒待った
-	}
+void SetTimeout(const std::string& outputLog, const std::chrono::seconds& waitTime /*second*/) {
+	printf(outputLog.c_str());
+	std::this_thread::sleep_for(waitTime);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,8 +41,7 @@ void Wait(OutputFunction func, int32_t waitSecond) {
 ////////////////////////////////////////////////////////////////////////////////////////////
 int main() {
 
-	printf("サイコロを振ります...\n");
-
+	printf("サイコロを振ります...");
 	int32_t dice = RollDice();
 
 	printf("半か丁か当ててください. 半だと思うなら1, 丁だと思うなら0\n");
@@ -79,12 +51,25 @@ int main() {
 
 	printf("答えは");
 
-	OutputFunction func = &OutputConsole;
-	Wait(func, 3);
+	// 1秒を3回待つ
+	for (int32_t i = 0; i < 3; ++i) {
+		SetTimeout(".", std::chrono::seconds(1));
+	}
 
 	printf("\n");
-	printf(std::format("diceの値: {}\n", dice).c_str());
-	printf(CheckAnswer(dice, answer).c_str());
+
+	std::function<std::string(void)> answerFunction = [answer, dice]() {
+		// userの答えが合っている場合
+		if (answer == dice % 2) {
+			return "正解\n";
+		}
+
+		return "不正解\n";
+	};
+
+	printf(answerFunction().c_str());
+
+	printf("\nダイス値: %d", dice);
 
 	return 0;
 }
