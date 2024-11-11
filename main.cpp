@@ -7,67 +7,63 @@
 #include <format>
 #include <thread>
 #include <queue>
-#include <mutex>
-#include <string>
+#include <chrono>
+
+#include "Thread.h"
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// TaskA class
+////////////////////////////////////////////////////////////////////////////////////////////
+class TaskA
+	: public IThread {
+public:
+
+	void Execute() override {
+		std::cout << "begin sleep thread id:" << std::this_thread::get_id() << std::endl;
+		std::this_thread::sleep_for(std::chrono::seconds(2));
+		std::cout << "end sleep thread id:" << std::this_thread::get_id() << std::endl;
+	}
+
+private:
+
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // main
 ////////////////////////////////////////////////////////////////////////////////////////////
 int main() {
 
-	//* back thread
+	std::unique_ptr<ThreadPool> pool = std::make_unique<ThreadPool>();
+	pool->Init();
 
-	std::mutex mutex;
-	std::queue<int> q;
-	bool isExit = false;
+	TaskA a;
+	TaskA b;
+	TaskA c;
 
-	std::thread th1([&]() {
-		uint32_t frame = 0;
-
-		while (!isExit) {
-
-			std::string log = "";
-			log += std::format("[back ground thread frame: {}] ", frame);
-
-			mutex.lock();
-			if (q.empty()) {
-				log += "q is empty...\n";
-
-			} else {
-				log += std::format("q front: {}\n", q.front());
-				q.pop();
-			}
-			mutex.unlock();
-
-			printf(log.c_str());
-			frame++;
-
-			// 早くなりすぎないよう調整
-			std::this_thread::sleep_for(std::chrono::milliseconds(600));
-		}
-	});
-
-	//* main
-
-	uint32_t frame = 0;
+	pool->SetTask(&a);
+	pool->SetTask(&b);
+	pool->SetTask(&c);
 
 	while (true) {
-
-		std::string log = "";
-
-		log += std::format("[main thread frame: {}] ", frame);
-
-		q.emplace(frame);
-		log += std::format("q emplace: {}\n", frame);
-
-		printf(log.c_str());
-		frame++;
-
-		// 早くなりすぎないよう調整
-		std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+		if (a.GetThreadState() == ThreadState::kCompleted) {
+			std::cout << "taskA is completed." << std::endl;
+			break;
+		}
 	}
 
-	th1.join();
+	while (true) {
+		if (b.GetThreadState() == ThreadState::kCompleted) {
+			std::cout << "taskB is completed." << std::endl;
+			break;
+		}
+	}
+
+	while (true) {
+		if (c.GetThreadState() == ThreadState::kCompleted) {
+			std::cout << "taskB is completed." << std::endl;
+			break;
+		}
+	}
 
 	return 0;
 }
