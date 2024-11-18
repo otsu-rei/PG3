@@ -15,17 +15,28 @@
 // TaskA class
 ////////////////////////////////////////////////////////////////////////////////////////////
 class TaskA
-	: public IThread {
+	: public IThreadExecution {
 public:
 
-	void Execute() override {
-		std::cout << "begin sleep thread id:" << std::this_thread::get_id() << std::endl;
+	void Execute(_MAYBE_UNUSED const Thread* const thread) override {
 		std::this_thread::sleep_for(std::chrono::seconds(2));
-		std::cout << "end sleep thread id:" << std::this_thread::get_id() << std::endl;
 	}
 
 private:
+};
 
+////////////////////////////////////////////////////////////////////////////////////////////
+// TaskB class
+////////////////////////////////////////////////////////////////////////////////////////////
+class TaskB
+	: public IThreadExecution {
+public:
+
+	void Execute(_MAYBE_UNUSED const Thread* const thread) override {
+		std::this_thread::sleep_for(std::chrono::seconds(6));
+	}
+
+private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,37 +44,20 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////
 int main() {
 
-	std::unique_ptr<ThreadPool> pool = std::make_unique<ThreadPool>();
-	pool->Init();
+	std::unique_ptr<ThreadCollection> collection = std::make_unique<ThreadCollection>();
+	collection->Init();
 
 	TaskA a;
-	TaskA b;
+	TaskB b;
 	TaskA c;
 
-	pool->SetTask(&a);
-	pool->SetTask(&b);
-	pool->SetTask(&c);
+	collection->PushTask(&a);
+	collection->PushTask(&b);
+	collection->PushTask(&c);
 
-	while (true) {
-		if (a.GetThreadState() == ThreadState::kCompleted) {
-			std::cout << "taskA is completed." << std::endl;
-			break;
-		}
-	}
-
-	while (true) {
-		if (b.GetThreadState() == ThreadState::kCompleted) {
-			std::cout << "taskB is completed." << std::endl;
-			break;
-		}
-	}
-
-	while (true) {
-		if (c.GetThreadState() == ThreadState::kCompleted) {
-			std::cout << "taskB is completed." << std::endl;
-			break;
-		}
-	}
+	a.WaitComplete();
+	b.WaitComplete();
+	c.WaitComplete();
 
 	return 0;
 }

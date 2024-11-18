@@ -14,33 +14,44 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <chrono>
 #include <cassert>
+#include <functional>
+#include <vector>
 
+#include "CXXAttributeConfig.h"
+
+//-----------------------------------------------------------------------------------------
+// forward
+//-----------------------------------------------------------------------------------------
+class Thread;
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-// ThreadState enum class
+// ExecutionState enum class
 ////////////////////////////////////////////////////////////////////////////////////////////
-enum class ThreadState : uint32_t {
-	kWaiting,   //!< 待機中
-	kRunning,   //!< 実行中
-	kCompleted, //!< 完了
+enum class ExecutionState {
+	kWaiting,
+	kRunning,
+	kCompleted,
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-// Interface Thread class
+// Interface ThreadExecution class
 ////////////////////////////////////////////////////////////////////////////////////////////
-class IThread {
+class IThreadExecution {
 public:
 
 	//=========================================================================================
-	// publicm methods
+	// public methods
 	//=========================================================================================
 
-	virtual void Execute() = 0;
+	virtual void Execute(_MAYBE_UNUSED const Thread* const thread) = 0;
 
-	const ThreadState GetThreadState() const { return state_; }
+	void WaitComplete();
 
-	void SetThreadState(ThreadState state) { state_ = state; }
+	ExecutionState GetState() const { return state_; }
+
+	void SetState(ExecutionState state) { state_ = state; }
 
 protected:
 
@@ -48,59 +59,78 @@ protected:
 	// protected variables
 	//=========================================================================================
 
-	ThreadState state_ = ThreadState::kWaiting;
+	ExecutionState state_ = ExecutionState::kWaiting;
 
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-// ThreadPool class
+// Thread class
 ////////////////////////////////////////////////////////////////////////////////////////////
-class ThreadPool {
+class Thread {
 public:
 
 	//=========================================================================================
-	// publicm methods
+	// public methods
 	//=========================================================================================
 
-	ThreadPool()  = default;
-	~ThreadPool() { Term(); }
+	Thread()  = default;
+	~Thread() { Term(); }
 
-	void Init();
-
-	void SetTask(IThread* task);
+	void Create(const std::function<void()>& threadFunc);
 
 	void Term();
 
-	
-private:
+	void ExecuteTask();
 
-	////////////////////////////////////////////////////////////////////////////////////////////
-	// ThreadInfo structure
-	////////////////////////////////////////////////////////////////////////////////////////////
-	struct ThreadInfo {
-		std::thread thread;
-		IThread*    task = nullptr;
-	};
+	bool IsTerm() const { return isTerm_; }
+
+	void SetTask(IThreadExecution* task) { task_ = task; }
+
+private:
 
 	//=========================================================================================
 	// private variables
 	//=========================================================================================
 
-	std::queue<IThread*>    tasks_;
-	std::vector<ThreadInfo> threads_;
-	//* thread数は std::thread::hardware_concurrency() - 1 が理想
+	std::thread thread_;
 
 	bool isTerm_ = false;
 
-	//* thread control members *//
-
-	std::mutex              mutex_;
-	std::condition_variable cond_;
-
-	//=========================================================================================
-	// private methods
-	//=========================================================================================
-
-	void ThreadLog(const std::string& mes);
+	IThreadExecution* task_ = nullptr;
 
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// ThreadCollection class
+////////////////////////////////////////////////////////////////////////////////////////////
+class ThreadCollection {
+public:
+
+	//=========================================================================================
+	// public methods
+	//=========================================================================================
+
+	ThreadCollection()  = default;
+	~ThreadCollection() { Term(); }
+
+	void Init();
+
+	void Term();
+
+	void PushTask(IThreadExecution* task) { tasks_.push(task); }
+
+private:
+
+	//=========================================================================================
+	// private variables
+	//=========================================================================================
+
+	std::vector<std::unique_ptr<Thread>> threads_;
+	std::queue<IThreadExecution*> tasks_;
+
+	std::mutex mutex_;
+
+};
+
+static std::mutex sMutex;
+void ThreadLog(const std::string& mes);
