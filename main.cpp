@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cassert>
 
 bool LoadFile(const std::string& filepath, std::vector<std::string>& datas) {
 
@@ -70,7 +71,7 @@ int main() {
 
 	std::vector<std::string> datas;
 
-	LoadFile("PG3_2024_03_02.txt", datas);
+	assert(LoadFile("PG3_2024_03_02.txt", datas));
 
 	// sort
 	std::sort(datas.begin(), datas.end(), [](const std::string& a, const std::string& b) {
