@@ -3,9 +3,10 @@
 //-----------------------------------------------------------------------------------------
 //* c++
 #include <cstdint>
-#include <cstdio>
+#include <iostream>
 #include <cassert>
 #include <format>
+#include <optional>
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // methods
@@ -14,22 +15,26 @@
 //! @brief 再帰的給料の計算
 //! @param[in] 働いた時間
 //! @return 給料
-int32_t CalculateSalaryRecursive(uint32_t workTime) {
-	assert(workTime != 0); //!< 働いてない
+int32_t CalculateNextSalaryRecursive() {
+	static std::optional<size_t> salary = std::nullopt; //!< 1時間前の給料
 
-	if (workTime == 1) { //!< 最初の1時間は100円
-		return 100;
+	// 給料の計算
+	if (salary.has_value()) {
+		salary = salary.value() * 2 - 50;
+
+	} else {
+		// 初回の給料計算
+		salary = 100;
 	}
 
-	//!< 前の1時間でもらった給料 * 2 - 50円
-	return CalculateSalaryRecursive(workTime - 1) * 2 - 50;
+	return salary.value();
 }
 
 //! @brief 一般給料の計算
 //! @param[in] 働いた時間
 //! @return 給料
-int32_t CalculateSalary(uint32_t workTime) {
-	return workTime * 1072; //!< 基本自給は1072円
+int32_t CalculateSalary() {
+	return 1072;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,25 +42,23 @@ int32_t CalculateSalary(uint32_t workTime) {
 ////////////////////////////////////////////////////////////////////////////////////////////
 int main() {
 
-	
-	uint32_t workTime = 1; //!< 働いた時間
+	size_t time = 0;
+
+	size_t defaultSalary   = 0;
+	size_t recursiveSalary = 0;
 
 	while (true) {
 
-		int32_t defaultSalary   = CalculateSalary(workTime);          //!< 一般給料
-		int32_t recursiveSalary = CalculateSalaryRecursive(workTime); //!< 再帰的給料
+		++time;
+		defaultSalary   += CalculateSalary();
+		recursiveSalary += CalculateNextSalaryRecursive();
 
-		printf(std::format("\n働いた時間: {}時間\n", workTime).c_str());
-		printf(std::format("> 一般給料: {}円\n", defaultSalary).c_str());
-		printf(std::format("> 再帰的給料: {}円\n", recursiveSalary).c_str());
+		std::cout << std::format("time:{} default:{} recursive:{}\n", time, defaultSalary, recursiveSalary) << std::endl;
 
-		if (recursiveSalary > defaultSalary) { //!< 再帰的給料が一般給料を超えた場合
+		if (recursiveSalary >= defaultSalary) {
 			break;
 		}
-
-		workTime++;
 	}
-	
 
 	return 0;
 }
